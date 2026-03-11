@@ -29,3 +29,6 @@ go.work.sum
 # VS Code
 .vscode/
 __debug_bin*
+
+# Binary
+dist/
