@@ -94,8 +94,8 @@ Examples and ready-to-use artifacts are under `examples/`:
 examples/
 ├─ userparameter/          # Zabbix Agent UserParameter files
 │  └─ zabbix-vault-pki.conf
-└─ template/               # Zabbix template (XML) for import
-   └─ zabbix-template-vault-pki.xml
+└─ template/               # Zabbix template (YAML) for import
+   └─ zabbix-template-vault-pki.yaml
 ```
 
 ---
