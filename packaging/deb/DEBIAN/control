@@ -1,0 +1,10 @@
+Package: zabbix-vault-pki
+Version: VERSION
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Kirill Shtrykov <kirill@shtrykov.com>
+Description: Zabbix monitoring tool for Vault PKI
+ Go application that retrieves certificate information from
+ HashiCorp Vault PKI backend and exposes it in a format
+ compatible with Zabbix monitoring.

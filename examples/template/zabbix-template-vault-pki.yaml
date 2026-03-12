@@ -1,0 +1,50 @@
+zabbix_export:
+  version: '6.0'
+  date: '2026-03-12T15:00:28Z'
+  groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: cc71b1e1fe0d4128a27121c01ff9a9b0
+      template: 'Hashicorp Vault PKI by Zabbix Agent'
+      name: 'Hashicorp Vault PKI by Zabbix Agent'
+      description: |
+        This Zabbix template provides low‑level discovery and expiration monitoring for certificates issued by HashiCorp Vault’s PKI engine.
+
+        It works with the companion CLI tool https://github.com/kirill-shtrykov/zabbix-vault-pki
+
+        The template includes:
+        LLD rule for discovering certificate serial numbers in Vault PKI
+        Item prototypes to collect expiration timestamps per certificate
+        Triggers to alert when certificates are nearing expiry
+      groups:
+        - name: Templates
+        - name: Templates/Applications
+      discovery_rules:
+        - uuid: 7a7214092508406db36d96869fa349a6
+          name: 'Certificate Discovery'
+          key: vault-pki.discovery
+          lifetime: 1d
+          item_prototypes:
+            - uuid: 171bac012165474e9ce9ab6e226750a6
+              name: 'Vault PKI: {#CN} certificate validity'
+              key: 'vault-pki.expiry[{#SN}]'
+              history: 7d
+              units: unixtime
+              tags:
+                - tag: component
+                  value: application
+              trigger_prototypes:
+                - uuid: d25d2a846a3947f886b0456c09274b8d
+                  expression: 'last(/Hashicorp Vault PKI by Zabbix Agent/vault-pki.expiry[{#SN}])< now() + 30d'
+                  name: 'Vault PKI certificate {#CN} [{#SN}] expires in less than 30 days'
+                  opdata: 'CN: {#CN}; SN: {#SN}'
+                  priority: HIGH
+                  manual_close: 'YES'
+      tags:
+        - tag: class
+          value: software
+        - tag: target
+          value: vault
