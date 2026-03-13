@@ -126,4 +126,4 @@ Please open an issue or a PR on the project repository:
 
 ## License
 
-[MIT](LICENCE)
+[MIT](LICENSE)
