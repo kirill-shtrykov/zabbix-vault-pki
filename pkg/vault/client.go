@@ -1,15 +1,24 @@
 package vault
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/kirill-shtrykov/zabbix-vault-pki/pkg/config"
 )
 
+var ErrAuthenticationError = errors.New("vault return empty response")
+
 func NewClient(cfg *config.Config) (*api.Client, error) {
 	defaultConfig := api.DefaultConfig()
 	defaultConfig.Address = cfg.Address
+
+	if err := defaultConfig.ConfigureTLS(&api.TLSConfig{
+		Insecure: cfg.TLSSkipVerify,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to configure TLS: %w", err)
+	}
 
 	client, err := api.NewClient(defaultConfig)
 	if err != nil {
@@ -24,6 +33,10 @@ func NewClient(cfg *config.Config) (*api.Client, error) {
 	secret, err := client.Logical().Write("auth/approle/login", loginData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to login with AppRole: %w", err)
+	}
+
+	if secret == nil || secret.Auth == nil {
+		return nil, ErrAuthenticationError
 	}
 
 	client.SetToken(secret.Auth.ClientToken)

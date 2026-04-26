@@ -6,11 +6,12 @@ import (
 )
 
 type Certificate struct {
-	Serial string
-	Cert   *x509.Certificate
+	Serial     string
+	Cert       *x509.Certificate
+	Revocation time.Time
 }
 
-func (c *Certificate) isValid() bool {
+func (c *Certificate) IsValid() bool {
 	now := time.Now()
 
 	if now.Before(c.Cert.NotBefore) || now.After(c.Cert.NotAfter) {
@@ -18,4 +19,8 @@ func (c *Certificate) isValid() bool {
 	}
 
 	return true
+}
+
+func (c *Certificate) IsRevoked() bool {
+	return !c.Revocation.IsZero()
 }

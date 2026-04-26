@@ -10,10 +10,16 @@ repos:
     rev: v0.5.1
     hooks:
       - id: go-fmt
-      - id: go-imports
       - id: no-go-testing
       - id: golangci-lint
       - id: go-unit-tests
+  - repo: local
+    hooks:
+      - id: go-imports
+        name: go imports
+        entry: bash -c 'PATH="$(go env GOPATH)/bin:$PATH" goimports -w "$@"' --
+        language: system
+        files: \.go$
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v9.24.0
     hooks:

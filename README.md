@@ -8,7 +8,9 @@ Go application that retrieves certificate information from the HashiCorp Vault P
 - Discover certificate serial numbers and common names from Vault PKI (LLD JSON output)
 - Return expiration timestamp for a given serial (UNIX seconds)
 - Configurable via CLI flags, HCL config file, or environment variables
-  Priority: **flags > HCL file > env vars**
+  Priority: **flags > env vars > HCL file**
+- Optional inclusion of revoked certificates in discovery output
+- Optional TLS certificate verification bypass for diagnostic or legacy setups
 - AppRole authentication support for Vault
 - Small single-binary CLI suitable for Zabbix `UserParameter`
 
@@ -33,10 +35,12 @@ Also [Taskfile](https://taskfile.dev/) is included.
 Global flags (can be provided before the command):
 
 ```
--address    Vault address (default: https://127.0.0.1:8200)
--role-id    AppRole RoleID
--secret-id  AppRole SecretID
--config     Path to HCL config (default: /etc/zabbix-vault-pki/config.hcl)
+-address            Vault address (default: https://127.0.0.1:8200)
+-role-id            AppRole RoleID
+-secret-id          AppRole SecretID
+-config             Path to HCL config (default: /etc/zabbix-vault-pki/config.hcl)
+-revoked            Include revoked certificates in discovery output
+-tls-skip-verify    Disable TLS certificate verification for Vault connection
 ```
 
 Commands:
@@ -67,10 +71,22 @@ Commands:
   1717459200
   ```
 
+- `version` — print application version
+
+Examples:
+
+```bash
+./zabbix-vault-pki discover
+./zabbix-vault-pki -revoked discover
+./zabbix-vault-pki -config=/etc/zabbix-vault-pki/config.hcl expiry 0f:d5:4a:...
+./zabbix-vault-pki version
+```
+
 Notes:
 
-- Prefer passing credentials with flags or env vars for automation: `VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`, `VAULT_CONFIG`.
+- Prefer passing credentials with flags or env vars for automation: `VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`, `VAULT_CONFIG`, `VAULT_REVOKED`, `VAULT_SKIP_VERIFY`.
 - HCL config is optional and fields are optional. Flags override HCL values.
+- `-tls-skip-verify` disables TLS verification and should be used only when you understand the security impact.
 
 ---
 
@@ -79,9 +95,11 @@ Notes:
 All fields are optional.
 
 ```hcl
-address   = "https://vault.example.com"
-role_id   = "your-role-id"
-secret_id = "your-secret-id"
+address         = "https://vault.example.com"
+role_id         = "your-role-id"
+secret_id       = "your-secret-id"
+revoked         = false
+tls_skip_verify = false
 ```
 
 ---
@@ -103,7 +121,7 @@ examples/
 ## Library / Code layout
 
 - `cmd/` — CLI entrypoint
-- `pkg/config` — configuration loader (flags > HCL > env)
+- `pkg/config` — configuration loader (flags > env > HCL)
 - `pkg/vault` — Vault client + AppRole login helper
 - `internal/monitor` — logic to list certs and fetch certificate info
 
