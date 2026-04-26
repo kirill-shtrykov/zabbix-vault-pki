@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -76,6 +77,14 @@ func (m *Monitor) certificate(serial string) (*Certificate, error) {
 		return nil, fmt.Errorf("%w: certificate field not found or not a string", ErrNotFound)
 	}
 
+	rev, ok := secret.Data["revocation_time_rfc3339"].(string)
+	if ok && rev != "" {
+		cert.Revocation, err = time.Parse(time.RFC3339, rev)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse time: %w", err)
+		}
+	}
+
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
 		return nil, fmt.Errorf("%w", ErrDecodePEM)
@@ -91,7 +100,7 @@ func (m *Monitor) certificate(serial string) (*Certificate, error) {
 	return cert, nil
 }
 
-func (m *Monitor) certificates(serials []string) ([]*Certificate, error) {
+func (m *Monitor) certificates(serials []string, revoked bool) ([]*Certificate, error) {
 	var certs []*Certificate
 
 	for _, serial := range serials {
@@ -100,7 +109,7 @@ func (m *Monitor) certificates(serials []string) ([]*Certificate, error) {
 			return nil, fmt.Errorf("failed to get certificate '%s': %w", serial, err)
 		}
 
-		if cert.isValid() {
+		if cert.IsValid(revoked) {
 			certs = append(certs, cert)
 		}
 	}
@@ -108,13 +117,13 @@ func (m *Monitor) certificates(serials []string) ([]*Certificate, error) {
 	return certs, nil
 }
 
-func (m *Monitor) Discovery() ([]byte, error) {
+func (m *Monitor) Discover(revoked bool) ([]byte, error) {
 	serials, err := m.list()
 	if err != nil {
 		return nil, err
 	}
 
-	certs, err := m.certificates(serials)
+	certs, err := m.certificates(serials, revoked)
 	if err != nil {
 		return nil, err
 	}
