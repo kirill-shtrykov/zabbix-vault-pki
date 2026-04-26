@@ -30,8 +30,43 @@ func TestCertificateIsValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := tt.cert.IsValid(tt.revoked); got != tt.want {
+			if got := tt.cert.IsValid(); got != tt.want {
 				t.Fatalf("IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCertificateIsRevoked(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+
+	tests := []struct {
+		name string
+		cert monitor.Certificate
+		want bool
+	}{
+		{
+			name: "not revoked",
+			cert: monitor.Certificate{},
+			want: false,
+		},
+		{
+			name: "revoked",
+			cert: monitor.Certificate{
+				Revocation: now,
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.cert.IsRevoked(); got != tt.want {
+				t.Fatalf("IsRevoked() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -63,10 +98,9 @@ func TestMonitorDiscoverAndExpiry(t *testing.T) {
 }
 
 type certificateValidityCase struct {
-	name    string
-	cert    monitor.Certificate
-	revoked bool
-	want    bool
+	name string
+	cert monitor.Certificate
+	want bool
 }
 
 func certificateValidityCases() []certificateValidityCase {
@@ -94,7 +128,7 @@ func certificateValidityCases() []certificateValidityCase {
 			want: false,
 		},
 		{
-			name: "revoked certificate excluded by default",
+			name: "revoked certificate is still time-valid",
 			cert: monitor.Certificate{
 				Cert: &x509.Certificate{
 					NotBefore: now.Add(-time.Hour),
@@ -102,19 +136,7 @@ func certificateValidityCases() []certificateValidityCase {
 				},
 				Revocation: now.Add(-time.Minute),
 			},
-			want: false,
-		},
-		{
-			name: "revoked certificate included when requested",
-			cert: monitor.Certificate{
-				Cert: &x509.Certificate{
-					NotBefore: now.Add(-time.Hour),
-					NotAfter:  now.Add(time.Hour),
-				},
-				Revocation: now.Add(-time.Minute),
-			},
-			revoked: true,
-			want:    true,
+			want: true,
 		},
 	}
 }

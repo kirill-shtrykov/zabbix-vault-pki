@@ -109,9 +109,15 @@ func (m *Monitor) certificates(serials []string, revoked bool) ([]*Certificate, 
 			return nil, fmt.Errorf("failed to get certificate '%s': %w", serial, err)
 		}
 
-		if cert.IsValid(revoked) {
-			certs = append(certs, cert)
+		if !cert.IsValid() {
+			continue
 		}
+
+		if cert.IsRevoked() && !revoked {
+			continue
+		}
+
+		certs = append(certs, cert)
 	}
 
 	return certs, nil

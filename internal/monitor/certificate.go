@@ -11,16 +11,16 @@ type Certificate struct {
 	Revocation time.Time
 }
 
-func (c *Certificate) IsValid(revoked bool) bool {
+func (c *Certificate) IsValid() bool {
 	now := time.Now()
 
 	if now.Before(c.Cert.NotBefore) || now.After(c.Cert.NotAfter) {
 		return false
 	}
 
-	if !c.Revocation.IsZero() && !revoked {
-		return false
-	}
-
 	return true
+}
+
+func (c *Certificate) IsRevoked() bool {
+	return !c.Revocation.IsZero()
 }
