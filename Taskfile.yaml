@@ -43,3 +43,7 @@ tasks:
     desc: Run linter
     cmds:
       - golangci-lint run --fix
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
